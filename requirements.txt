@@ -1,0 +1,9 @@
+opencv-python
+numpy
+paho-mqtt
+pycryptodome
+# ML / dataset (usati per training e download dataset)
+tensorflow
+datasets
+# Runtime inferenza su Raspberry Pi (su PC fallback a tensorflow.lite)
+# tflite-runtime
