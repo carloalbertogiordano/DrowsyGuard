@@ -1,8 +1,6 @@
 import os
 import numpy as np
 
-from mocks.GPIO import output
-
 try:
     import tflite_runtime.interpreter as tflite
 except ImportError:
@@ -24,7 +22,6 @@ class InferenceEngine:
         input_shape = self.interpreter.get_input_details()[0]['shape']
         self.height = input_shape[1]
         self.width = input_shape[2]
-
 
     def predict(self, processed_image: np.ndarray) -> float:
         img = processed_image.astype(np.float32)

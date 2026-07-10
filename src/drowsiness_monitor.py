@@ -1,9 +1,7 @@
-import cv2
-import argparse
 from datetime import datetime
-import time
 from collections import deque
-import numpy as np
+
+import cv2
 
 from src.frame_provider import FrameProvider
 from src.image_processor import ImageProcessor
@@ -39,7 +37,9 @@ class DrowsinessMonitor:
             is_drowsy = avg_confidence > self.threshold
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            self.alert_notifier.notify(drowsy_detected=is_drowsy, timestamp=timestamp, confidence=avg_confidence)
+            self.alert_notifier.notify(
+                drowsy_detected=is_drowsy, timestamp=timestamp, confidence=avg_confidence
+            )
             self._display_frame(frame, is_drowsy, avg_confidence)
 
     def _display_frame(self, frame, is_drowsy, confidence, fps=0.0):

@@ -4,19 +4,20 @@ import time
 import paho.mqtt.client as mqtt
 
 from security.security_manager import SecurityManager
-from security import key as key
+from security import key
 
 try:
-    import RPi.GPIO as GPIO
+    from RPi import GPIO
     GPIO_MOCK = False
 except (ImportError, RuntimeError):
-    import mocks.GPIO as GPIO
+    from mocks import GPIO
     GPIO_MOCK = True
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message)s')
 
 BUZZER_PIN = 17
-FREQUENCY = 440 #Hz
+FREQUENCY = 440  # Hz
+
 
 class AlertNotifier:
 
@@ -29,7 +30,7 @@ class AlertNotifier:
         # PWM
         self.pwm = GPIO.PWM(BUZZER_PIN, FREQUENCY)
 
-        #MQTT
+        # MQTT
         self.server = '127.0.0.1'
         self.port = 1883
         self.topic = 'v1/devices/me/telemetry'
@@ -54,6 +55,8 @@ class AlertNotifier:
         if rc == 0:
             self._connected = True
             logging.info("MQTT Connected")
+            return
+
         logging.error("MQTT Connection Error")
 
     def _on_disconnect(self, client, userdata, rc):
@@ -61,7 +64,8 @@ class AlertNotifier:
             logging.warning('MQTT disconnected')
 
     def publish_via_mqtt(self, timestamp: str, confidence: float):
-        if not self._connected: return
+        if not self._connected:
+            return
 
         data = {
             "status": "DROWSY_DETECTED",
