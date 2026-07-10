@@ -1,9 +1,13 @@
-opencv-python
+opencv-python<5
 numpy
 paho-mqtt
 pycryptodome
 # ML / dataset (usati per training e download dataset)
 tensorflow
 datasets
+pillow
+scipy
+scikit-learn
+matplotlib
 # Runtime inferenza su Raspberry Pi (su PC fallback a tensorflow.lite)
 # tflite-runtime

@@ -14,6 +14,15 @@ __pycache__/
 # Dataset (scaricato localmente, non versionato)
 dataset/*
 
+# Cache compilazione kernel GPU (Intel NEO/oneAPI, specifica di macchina/driver)
+.gpu-cache/
+
+# Campioni di verifica preprocessing (rigenerabili con preview_preprocessing.py)
+models/preprocessing_samples/
+
+# Output demo adversarial attack/difesa (rigenerabile con security_demo_docker.sh)
+security/adversarial_demo/
+
 # Chiave segreta AES (mai versionare)
 security/key.py
 
