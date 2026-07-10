@@ -19,6 +19,50 @@ BUZZER_PIN = 17
 FREQUENCY = 440  # Hz
 
 
+class AlarmState:
+    """
+    Encapsulates the alarm's start/stop hysteresis logic (min duration
+    before turning off), independent of MQTT/GPIO. Extracted from
+    AlertNotifier to reduce instance attribute count (pylint R0902) and to
+    make the timing logic testable on its own.
+    """
+
+    def __init__(self, min_duration: float):
+        self.min_duration = min_duration
+        self.is_active = False
+        self.last_trigger_time = 0
+
+    def trigger(self, current_time: float) -> bool:
+        """Records a trigger event. Returns True only on the transition
+        from inactive to active (i.e. the alarm just started)."""
+        self.last_trigger_time = current_time
+        if not self.is_active:
+            self.is_active = True
+            return True
+        return False
+
+    def maybe_clear(self, current_time: float) -> bool:
+        """Turns the alarm off if min_duration has elapsed since the last
+        trigger. Returns True only on the transition from active to
+        inactive (i.e. the alarm was just turned off)."""
+        if not self.is_active:
+            return False
+        elapsed = current_time - self.last_trigger_time
+        if elapsed >= self.min_duration:
+            self.is_active = False
+            return True
+        return False
+
+
+class MqttConfig:
+    """Groups the MQTT connection parameters into a single value object."""
+
+    def __init__(self, server: str, port: int, topic: str):
+        self.server = server
+        self.port = port
+        self.topic = topic
+
+
 class AlertNotifier:
 
     def __init__(self):
@@ -31,24 +75,24 @@ class AlertNotifier:
         self.pwm = GPIO.PWM(BUZZER_PIN, FREQUENCY)
 
         # MQTT
-        self.server = '127.0.0.1'
-        self.port = 1883
-        self.topic = 'v1/devices/me/telemetry'
+        self.mqtt_config = MqttConfig(
+            server='127.0.0.1', port=1883, topic='v1/devices/me/telemetry'
+        )
 
         # Security
         self.security = SecurityManager(key.AES_KEY)
 
-        # Alarm status
-        self.is_alert_active = False
-        self.last_alarm_trigger_time = 0
-        self.min_alarm_duration = 2.0
+        # Alarm state
+        self.alarm_state = AlarmState(min_duration=2.0)
         self._connected = False
 
         # Client MQTT
         self.client = mqtt.Client()
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
-        self.client.connect_async(self.server, self.port, keepalive=60)
+        self.client.connect_async(
+            self.mqtt_config.server, self.mqtt_config.port, keepalive=60
+        )
         self.client.loop_start()
 
     def _on_connect(self, client, userdata, flags, rc):
@@ -74,24 +118,21 @@ class AlertNotifier:
         }
 
         encrypted_payload = self.security.encrypt_data(data)
-        self.client.publish(self.topic, encrypted_payload)
+        self.client.publish(self.mqtt_config.topic, encrypted_payload)
 
     def notify(self, drowsy_detected: bool, timestamp: str, confidence: float):
         current_time = time.time()
 
         if drowsy_detected:
-            self.last_alarm_trigger_time = current_time
-            if not self.is_alert_active:
+            just_activated = self.alarm_state.trigger(current_time)
+            if just_activated:
                 self.pwm.start(50)
-                self.is_alert_active = True
                 self.publish_via_mqtt(timestamp, confidence)
             return
 
-        if self.is_alert_active:
-            elapsed = current_time - self.last_alarm_trigger_time
-            if elapsed >= self.min_alarm_duration:
-                self.pwm.stop()
-                self.is_alert_active = False
+        just_deactivated = self.alarm_state.maybe_clear(current_time)
+        if just_deactivated:
+            self.pwm.stop()
 
     def cleanup(self):
         self.pwm.stop()

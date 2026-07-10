@@ -50,7 +50,7 @@ class TestAlertNotifier(TestCase):
         notifier.notify(drowsy_detected=True, timestamp="10:00:00", confidence=0.90)
 
         # --- ASSERT 1 ---
-        self.assertTrue(notifier.is_alert_active)
+        self.assertTrue(notifier.alarm_state.is_active)
         mock_instance.publish.assert_called_once()
 
         mock_instance.publish.reset_mock()
@@ -67,15 +67,15 @@ class TestAlertNotifier(TestCase):
         # --- ARRANGE ---
         mock_client_class.return_value = MagicMock()
         notifier = AlertNotifier()
-        notifier.is_alert_active = True
-        notifier.last_alarm_trigger_time = 1000.0
+        notifier.alarm_state.is_active = True
+        notifier.alarm_state.last_trigger_time = 1000.0
         mock_time.return_value = 1005.0  # 5s later, > min_alarm_duration (2s)
 
         # --- ACT ---
         notifier.notify(drowsy_detected=False, timestamp="12:00:00", confidence=0.0)
 
         # --- ASSERT ---
-        self.assertFalse(notifier.is_alert_active)
+        self.assertFalse(notifier.alarm_state.is_active)
 
     @patch('src.alert_notifier.mqtt.Client')
     @patch.object(GPIO, "PWM")
@@ -102,8 +102,8 @@ class TestAlertNotifier(TestCase):
         mock_pwm_class.return_value = mock_pwm_instance
         mock_mqtt_class.return_value = MagicMock()
         notifier = AlertNotifier()
-        notifier.is_alert_active = True
-        notifier.last_alarm_trigger_time = 1000.0
+        notifier.alarm_state.is_active = True
+        notifier.alarm_state.last_trigger_time = 1000.0
         mock_time.return_value = 1005.0
 
         # --- ACT ---
