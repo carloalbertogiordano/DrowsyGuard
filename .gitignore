@@ -26,6 +26,12 @@ security/adversarial_demo/
 # Chiave segreta AES (mai versionare)
 security/key.py
 .env
+arduino/include/secrets.h
+
+# PlatformIO build cache/artifacts (rigenerabili)
+arduino/.pio/
+arduino/compile_commands.json
+arduino/.idea/
 
 # macOS
 .DS_Store
