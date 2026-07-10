@@ -1,0 +1,21 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: drowsyguard-mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./node-red/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+  node-red:
+    build: ./node-red
+    container_name: drowsyguard-node-red
+    ports:
+      - "1880:1880"
+    environment:
+      - AES_KEY=${AES_KEY}
+    volumes:
+      - ./node-red/flows.json:/data/flows.json
+      - ./node-red/settings.js:/data/settings.js:ro
+    depends_on:
+      - mosquitto

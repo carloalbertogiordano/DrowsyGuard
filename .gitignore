@@ -25,6 +25,7 @@ security/adversarial_demo/
 
 # Chiave segreta AES (mai versionare)
 security/key.py
+.env
 
 # macOS
 .DS_Store
