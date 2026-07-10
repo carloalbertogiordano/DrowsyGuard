@@ -1,17 +1,17 @@
 """
-Adversarial patch attack + difesa (input sanitization), per la dimostrazione
-IoT security del progetto (T4.3/T4.4).
+Adversarial patch attack + defense (input sanitization), for the project's
+IoT security demonstration (T4.3/T4.4).
 
-Attacco: genera una piccola patch di pixel che, sovrapposta a un'immagine,
-inganna il modello (evasion attack) -- via gradient ascent (PGD-style):
-si ottimizzano i pixel della patch per MASSIMIZZARE la loss rispetto
-all'etichetta vera, tenendo i pesi del modello fissi. Stesso meccanismo
-matematico del training, ma con i ruoli invertiti (variabile = patch, non
-pesi; obiettivo = errore, non accuratezza).
+Attack: generates a small pixel patch that, overlaid on an image, fools the
+model (evasion attack) -- via gradient ascent (PGD-style): the patch pixels
+are optimized to MAXIMIZE the loss w.r.t. the true label, keeping the
+model's weights fixed. Same mathematical mechanism as training, but with
+the roles reversed (variable = patch, not weights; objective = error, not
+accuracy).
 
-Difesa: sanitizzazione dell'input (blur gaussiano) prima dell'inferenza, per
-rompere la perturbazione ad alta frequenza tipica delle patch adversarial,
-senza richiedere un nuovo training del modello.
+Defense: input sanitization (Gaussian blur) before inference, to break the
+high-frequency perturbation typical of adversarial patches, without
+requiring any retraining of the model.
 """
 
 import os
@@ -23,8 +23,8 @@ import tensorflow as tf
 
 def apply_patch(image: np.ndarray, patch: np.ndarray, position: tuple) -> np.ndarray:
     """
-    Sovrappone patch su image alla posizione (x, y) = angolo alto-sinistra.
-    Ritorna una COPIA (non modifica l'originale).
+    Overlays patch onto image at position (x, y) = top-left corner.
+    Returns a COPY (does not modify the original).
     """
     result = image.copy()
     x, y = position
@@ -43,17 +43,17 @@ def generate_patch(
     steps: int = 50,
 ) -> np.ndarray:
     """
-    Genera una patch adversarial per una specifica immagine, via gradient
+    Generates an adversarial patch for a specific image, via gradient
     ascent (PGD-style).
 
-    image: (H, W, 3) float32, valori 0..255 (stesso formato preprocessing
-           del training, es. canali Y/B/R gia' estratti).
-    true_label: 0 o 1, l'etichetta vera dell'immagine (serve per calcolare
-                la loss da massimizzare -- vogliamo che il modello sbagli
-                proprio su QUESTA etichetta).
-    position: dove piazzare la patch (x, y).
-    epsilon: step size per ogni iterazione del gradient ascent.
-    steps: numero di iterazioni.
+    image: (H, W, 3) float32, values 0..255 (same preprocessing format as
+           training, e.g. Y/B/R channels already extracted).
+    true_label: 0 or 1, the image's true label (needed to compute the loss
+                to maximize -- we want the model to be wrong specifically
+                on THIS label).
+    position: where to place the patch (x, y).
+    epsilon: step size for each gradient ascent iteration.
+    steps: number of iterations.
     """
     x, y = position
     patch = tf.Variable(
@@ -76,8 +76,8 @@ def generate_patch(
             loss = loss_fn(label, prediction)
 
         grad = tape.gradient(loss, patch)
-        # Gradient ASCENT (+=, non -=): vogliamo AUMENTARE la loss (far
-        # sbagliare il modello), non minimizzarla come nel training normale.
+        # Gradient ASCENT (+=, not -=): we want to INCREASE the loss (make
+        # the model wrong), not minimize it like in normal training.
         patch.assign_add(epsilon * tf.sign(grad))
         patch.assign(tf.clip_by_value(patch, 0, 255))
 
@@ -86,10 +86,10 @@ def generate_patch(
 
 def sanitize(image: np.ndarray, blur_ksize: int = 5) -> np.ndarray:
     """
-    Difesa: blur gaussiano prima dell'inferenza. Le patch adversarial
-    dipendono da perturbazioni precise pixel-per-pixel (alta frequenza);
-    sfocare l'immagine le distrugge, mentre il contenuto "vero" (basso
-    frequenza: forma occhio, luminosita' generale) resta riconoscibile.
+    Defense: Gaussian blur before inference. Adversarial patches rely on
+    precise pixel-by-pixel perturbations (high frequency); blurring the
+    image destroys them, while the "real" content (low frequency: eye
+    shape, general brightness) remains recognizable.
     """
     blurred = cv2.GaussianBlur(image.astype("uint8"), (blur_ksize, blur_ksize), 0)
     return blurred.astype("float32")

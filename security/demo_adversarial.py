@@ -1,13 +1,13 @@
 """
-Demo end-to-end: attacco adversarial patch + difesa (input sanitization).
+End-to-end demo: adversarial patch attack + defense (input sanitization).
 
-1. Carica il modello allenato e un'immagine di validation.
-2. Predizione baseline (nessun attacco).
-3. Genera e applica una patch adversarial -> predizione (dovrebbe sbagliare).
-4. Applica la difesa (blur) sull'immagine con patch -> predizione (dovrebbe
-   tornare corretta).
-5. Salva le 3 immagini (originale, con patch, con patch+difesa) e un report
-   testuale con le confidence, per la relazione.
+1. Load the trained model and a validation image.
+2. Baseline prediction (no attack).
+3. Generate and apply an adversarial patch -> prediction (should be wrong).
+4. Apply the defense (blur) to the patched image -> prediction (should be
+   correct again).
+5. Save the 3 images (original, patched, patched+defended) and a text
+   report with confidence values, for the write-up.
 """
 
 import os
@@ -26,7 +26,7 @@ from adversarial_patch import apply_patch, generate_patch, sanitize
 KERAS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "models", "drowsiness_model.keras")
 VAL_DIR = os.path.join(os.path.dirname(__file__), "..", "dataset", "validation")
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "adversarial_demo")
-CLASSES = ["not_drowsy", "drowsy"]  # indice 1 = drowsy (coerente con train_model.py)
+CLASSES = ["not_drowsy", "drowsy"]  # index 1 = drowsy (consistent with train_model.py)
 
 
 def pick_sample():
@@ -41,7 +41,7 @@ def load_and_preprocess(path):
     bgr = cv2.imread(path)
     rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
     rgb = cv2.resize(rgb, SQUARE_SIZE)
-    return to_luminance(rgb)  # (H, W, 3) float32, canali [Y, B, R]
+    return to_luminance(rgb)  # (H, W, 3) float32, channels [Y, B, R]
 
 
 def predict(model, image):
@@ -73,7 +73,7 @@ def main():
     report_lines.append(f"Baseline:            P(drowsy)={prob:.4f}  predetto={pred}")
     cv2.imwrite(os.path.join(OUTPUT_DIR, "1_original.png"), image.astype("uint8"))
 
-    # 2. Attacco
+    # 2. Attack
     patch = generate_patch(model, image, true_label)
     patched_image = apply_patch(image, patch, position=(38, 38))
     prob_attack, pred_attack = predict(model, patched_image)
@@ -81,7 +81,7 @@ def main():
     report_lines.append(f"Con patch (attacco): P(drowsy)={prob_attack:.4f}  predetto={pred_attack}")
     cv2.imwrite(os.path.join(OUTPUT_DIR, "2_patched.png"), patched_image.astype("uint8"))
 
-    # 3. Difesa
+    # 3. Defense
     sanitized_image = sanitize(patched_image)
     prob_defense, pred_defense = predict(model, sanitized_image)
     print(f"[Patch + difesa]  P(drowsy)={prob_defense:.4f}  predetto={pred_defense}")

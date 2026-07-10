@@ -18,7 +18,7 @@ class ImageProcessor:
 
         if image is None:
             raise FrameError
-        # Correct Colour
+        # Correct colour
         img = self.image_to_color_image(image)
 
         # Correct size

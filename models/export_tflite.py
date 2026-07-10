@@ -1,11 +1,11 @@
 """
-Converte il modello Keras allenato (models/drowsiness_model.keras) in TFLite
-(models/drowsiness_model.tflite) -- formato usato da InferenceEngine
-(src/inference_engine.py) a runtime.
+Converts the trained Keras model (models/drowsiness_model.keras) to TFLite
+(models/drowsiness_model.tflite) -- the format used by InferenceEngine
+(src/inference_engine.py) at runtime.
 
-Va eseguito con la STESSA versione di TensorFlow/Keras usata per il training
-(2.15.0.3, dentro il container Docker ITEX) per evitare problemi di
-compatibilita' nel caricamento del file .keras -- vedi export_tflite_docker.sh.
+Must be run with the SAME TensorFlow/Keras version used for training
+(2.15.0.3, inside the ITEX Docker container) to avoid compatibility issues
+when loading the .keras file -- see export_tflite_docker.sh.
 """
 
 import os
@@ -36,7 +36,7 @@ def export():
     print(f"Modello TFLite salvato in: {TFLITE_MODEL_PATH}")
     print(f"Dimensione: {keras_size:.1f} KB (.keras) -> {tflite_size:.1f} KB (.tflite)")
 
-    # Verifica: carica il .tflite e controlla input/output shape attesi
+    # Verify: load the .tflite and check the expected input/output shape
     interpreter = tf.lite.Interpreter(model_path=TFLITE_MODEL_PATH)
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()[0]

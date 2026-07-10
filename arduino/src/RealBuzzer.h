@@ -3,8 +3,8 @@
 #include <Arduino.h>
 #include "IBuzzer.h"
 
-// Implementazione reale di IBuzzer: pilota un pin GPIO vero sulla scheda.
-// Controparte di MockBuzzer (usato nei test nativi).
+// Real implementation of IBuzzer: drives an actual GPIO pin on the board.
+// Counterpart of MockBuzzer (used in native tests).
 class RealBuzzer : public IBuzzer {
 public:
     explicit RealBuzzer(uint8_t pin) : pin_(pin) {

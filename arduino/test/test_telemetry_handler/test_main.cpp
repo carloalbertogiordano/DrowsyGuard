@@ -2,13 +2,13 @@
 #include "telemetry_handler.h"
 #include "MockBuzzer.h"
 
-// --- fixture: ricreata ad ogni test da setUp() ---
+// --- fixture: recreated for each test by setUp() ---
 MockBuzzer* mock_buzzer;
 TelemetryHandler* handler;
 
 void setUp(void) {
     mock_buzzer = new MockBuzzer();
-    handler = new TelemetryHandler(*mock_buzzer, 2000);  // timeout 2000ms
+    handler = new TelemetryHandler(*mock_buzzer, 2000);  // 2000ms timeout
 }
 
 void tearDown(void) {
@@ -31,19 +31,19 @@ void test_buzzer_does_not_restart_if_already_active(void) {
     const char* json = "{\"status\":\"DROWSY_DETECTED\",\"timestamp\":\"t\",\"probability\":0.9}";
 
     handler->onMessage(json, 1000);
-    handler->onMessage(json, 1100);  // secondo messaggio, poco dopo
+    handler->onMessage(json, 1100);  // second message, shortly after
 
-    TEST_ASSERT_EQUAL_INT(1, mock_buzzer->start_calls);  // non richiamato
+    TEST_ASSERT_EQUAL_INT(1, mock_buzzer->start_calls);  // not called again
 }
 
 void test_buzzer_stops_after_timeout_via_update(void) {
     const char* json = "{\"status\":\"DROWSY_DETECTED\",\"timestamp\":\"t\",\"probability\":0.9}";
 
     handler->onMessage(json, 1000);
-    handler->update(2999);  // ancora dentro il timeout (2000ms da 1000)
+    handler->update(2999);  // still within the timeout (2000ms from 1000)
     TEST_ASSERT_TRUE(mock_buzzer->is_running);
 
-    handler->update(3001);  // timeout superato
+    handler->update(3001);  // timeout exceeded
     TEST_ASSERT_FALSE(mock_buzzer->is_running);
     TEST_ASSERT_EQUAL_INT(1, mock_buzzer->stop_calls);
 }

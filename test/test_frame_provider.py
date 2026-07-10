@@ -42,7 +42,7 @@ class TestFrameProvider(unittest.TestCase):
         fake_frame = np.zeros((10, 10, 3), dtype=np.uint8)
         mock_capturer = MagicMock()
         mock_capturer.isOpened.return_value = True
-        # prima lettura fallisce (video finito), seconda riparte da capo
+        # first read fails (video ended), second one restarts from the beginning
         mock_capturer.read.side_effect = [(False, None), (True, fake_frame)]
         video_capture.return_value = mock_capturer
 

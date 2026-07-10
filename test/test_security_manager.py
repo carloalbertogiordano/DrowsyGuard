@@ -7,7 +7,7 @@ from security.security_manager import SecurityManager
 class TestSecurityManager(TestCase):
 
     def setUp(self):
-        # Chiave di test da 16 byte -> AES-128 (pycryptodome sceglie la variante dalla lunghezza chiave)
+        # 16-byte test key -> AES-128 (pycryptodome picks the variant based on key length)
         self.key = "0123456789abcdef"
         self.manager = SecurityManager(self.key)
 
@@ -20,9 +20,9 @@ class TestSecurityManager(TestCase):
 
         # --- ASSERT ---
         self.assertIsInstance(result, str)
-        # deve essere decodificabile in base64 senza errori
+        # must be decodable as base64 without errors
         decoded = base64.b64decode(result)
-        # deve contenere almeno IV (16 byte) + un blocco cifrato (16 byte)
+        # must contain at least IV (16 bytes) + one encrypted block (16 bytes)
         self.assertGreaterEqual(len(decoded), 32)
 
     def test_encrypt_data_uses_random_iv_each_time(self):
@@ -34,7 +34,7 @@ class TestSecurityManager(TestCase):
         result2 = self.manager.encrypt_data(data)
 
         # --- ASSERT ---
-        # stesso dato in chiaro, ma IV casuale diverso -> output cifrato diverso
+        # same plaintext data, but different random IV -> different encrypted output
         self.assertNotEqual(result1, result2)
 
     def test_decrypt_data_returns_original_dict(self):

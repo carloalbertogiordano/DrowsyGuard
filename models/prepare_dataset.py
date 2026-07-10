@@ -1,13 +1,13 @@
 """
-Scarica il dataset "n7i5x9/driver-drowsiness-dataset" da Hugging Face ed esporta
-ogni immagine come file .jpg dentro dataset/<split>/<classe>/, dove <split> e'
-train/validation/test (preservati come nel dataset originale) e <classe> e'
-"drowsy" o "not_drowsy".
+Downloads the "n7i5x9/driver-drowsiness-dataset" dataset from Hugging Face and
+exports each image as a .jpg file into dataset/<split>/<class>/, where <split>
+is train/validation/test (preserved as in the original dataset) and <class>
+is "drowsy" or "not_drowsy".
 
-IMPORTANTE: gli split NON vengono mescolati tra loro. Il dataset originale
-contiene gia' augmentation; unire i 3 split e poi ri-splittare a caso
-rischierebbe di mettere varianti della stessa immagine sorgente sia in train
-che in validation/test (data leakage), gonfiando artificialmente l'accuracy.
+IMPORTANT: the splits are NOT mixed with each other. The original dataset
+already contains augmentation; merging the 3 splits and then re-splitting
+randomly would risk putting variants of the same source image in both train
+and validation/test (data leakage), artificially inflating accuracy.
 """
 
 import os
@@ -25,13 +25,13 @@ def export_split(dataset_split, class_names, output_dir, split_name):
         label = example["label"]
         class_name = class_names[label]
 
-        # struttura preservata: dataset/<split>/<classe>/
+        # structure preserved: dataset/<split>/<class>/
         class_dir = os.path.join(output_dir, split_name, class_name)
         os.makedirs(class_dir, exist_ok=True)
 
         image_path = os.path.join(class_dir, f"{idx}.jpg")
 
-        # alcune immagini nel dataset sono in modalita' non-RGB (es. RGBA, L)
+        # some images in the dataset are in a non-RGB mode (e.g. RGBA, L)
         if image.mode != "RGB":
             image = image.convert("RGB")
         image.save(image_path)

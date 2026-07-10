@@ -1,10 +1,10 @@
 #pragma once
 
-// Interfaccia astratta per il buzzer -- stesso ruolo di mocks/GPIO.py lato
-// Python: il codice "core" (telemetry_handler) dipende solo da questa
-// interfaccia, mai da pin/hardware reali. Due implementazioni:
-//   - RealBuzzer  (src/main.cpp, usa davvero i pin GPIO sulla scheda)
-//   - MockBuzzer  (test/, registra le chiamate per verificarle nei test)
+// Abstract interface for the buzzer -- same role as mocks/GPIO.py on the
+// Python side: the "core" code (telemetry_handler) only depends on this
+// interface, never on real pins/hardware. Two implementations:
+//   - RealBuzzer  (src/main.cpp, actually drives the GPIO pins on the board)
+//   - MockBuzzer  (test/, records calls so they can be checked in tests)
 class IBuzzer {
 public:
     virtual ~IBuzzer() = default;

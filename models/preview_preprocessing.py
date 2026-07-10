@@ -1,11 +1,11 @@
 """
-Verifica visiva del preprocessing (resize quadrato + luminanza YCbCr).
-Prende N immagini a caso dal training set (mix drowsy/not_drowsy), applica
-la stessa to_luminance() usata da train_model.py, e salva coppie
-originale/preprocessata in models/preprocessing_samples/ cosi' si puo'
-controllare a occhio il risultato.
+Visual check of the preprocessing (square resize + YCbCr luminance).
+Picks N random images from the training set (mix of drowsy/not_drowsy),
+applies the same to_luminance() used by train_model.py, and saves
+original/preprocessed pairs into models/preprocessing_samples/ so the
+result can be checked by eye.
 
-Gira in locale, no GPU/Docker necessario (solo OpenCV, veloce).
+Runs locally, no GPU/Docker needed (just OpenCV, fast).
 """
 
 import os
@@ -43,9 +43,9 @@ def main():
     for i, (class_name, path) in enumerate(samples):
         bgr = cv2.imread(path)
         rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-        rgb = cv2.resize(rgb, SQUARE_SIZE)  # forza quadrato (stretch)
+        rgb = cv2.resize(rgb, SQUARE_SIZE)  # force square (stretch)
 
-        processed = to_luminance(rgb)  # (H, W, 3) float32, canali [Y, B, R]
+        processed = to_luminance(rgb)  # (H, W, 3) float32, channels [Y, B, R]
         processed_img = processed.astype("uint8")
         y_channel, b_channel, r_channel = (processed_img[:, :, c] for c in range(3))
 
@@ -56,7 +56,7 @@ def main():
         r_path = os.path.join(OUTPUT_DIR, f"{i}_{class_name}_channel_R.png")
 
         cv2.imwrite(original_path, bgr)
-        cv2.imwrite(composite_path, processed_img)  # 3 canali, "falso colore"
+        cv2.imwrite(composite_path, processed_img)  # 3 channels, "false color"
         cv2.imwrite(y_path, y_channel)
         cv2.imwrite(b_path, b_channel)
         cv2.imwrite(r_path, r_channel)

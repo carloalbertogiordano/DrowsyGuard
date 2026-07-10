@@ -1,2 +1,2 @@
 class VideoOpenError(Exception):
-    """Eccezione sollevata quando il video non può essere aperto."""
+    """Exception raised when the video cannot be opened."""

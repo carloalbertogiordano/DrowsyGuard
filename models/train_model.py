@@ -1,33 +1,33 @@
 """
-Allena una CNN custom leggera (<2M parametri, niente transfer learning) per la
-classificazione binaria drowsy / not_drowsy, usando dataset/train e
-dataset/validation (vedi prepare_dataset.py).
+Trains a lightweight custom CNN (<2M parameters, no transfer learning) for
+binary drowsy / not_drowsy classification, using dataset/train and
+dataset/validation (see prepare_dataset.py).
 
-Preprocessing: nessun crop, nessun filtro. Solo resize a immagine quadrata +
-conversione a luminanza (canale Y di YCbCr, vedi preprocessing.py). L'idea
-del crop occhio via Haar cascade e' stata abbandonata (troppi falsi
-rilevamenti/scarti sul dataset reale).
+Preprocessing: no crop, no filter. Just square resize + conversion to
+luminance (Y channel of YCbCr, see preprocessing.py). The eye-crop-via-Haar-
+cascade idea was abandoned (too many false detections/discards on the real
+dataset).
 
-L'output del modello e' un singolo neurone sigmoid: P(drowsy). Per garantirlo
-in modo esplicito (non affidandosi all'ordine alfabetico automatico), le
-classi vengono passate esplicitamente a flow_from_directory nell'ordine
-["not_drowsy", "drowsy"], cosi' "drowsy" e' sempre l'indice 1 (classe
-positiva del sigmoid) -- coerente con il resto della pipeline
-(DrowsinessMonitor tratta la confidence come P(drowsy)).
+The model output is a single sigmoid neuron: P(drowsy). To guarantee this
+explicitly (rather than relying on automatic alphabetical order), the
+classes are passed explicitly to flow_from_directory in the order
+["not_drowsy", "drowsy"], so "drowsy" is always index 1 (the sigmoid's
+positive class) -- consistent with the rest of the pipeline
+(DrowsinessMonitor treats confidence as P(drowsy)).
 
-Dopo il training, valuta il modello sul validation set (mai visto in training,
-niente augmentation) e produce:
+After training, evaluates the model on the validation set (never seen
+during training, no augmentation) and produces:
   - models/evaluation/training_curves.png   (loss/val_loss, accuracy/val_accuracy)
   - models/evaluation/confusion_matrix.png
-  - models/evaluation/roc_curve.png         (con AUC)
-  - models/evaluation/classification_report.txt (precision/recall/f1 per classe)
+  - models/evaluation/roc_curve.png         (with AUC)
+  - models/evaluation/classification_report.txt (precision/recall/f1 per class)
 """
 
 import os
 
 import matplotlib
 
-matplotlib.use("Agg")  # niente display, salviamo solo su file (container headless)
+matplotlib.use("Agg")  # no display, save to file only (headless container)
 import matplotlib.pyplot as plt
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
@@ -41,7 +41,7 @@ from tensorflow.keras import layers, models, callbacks, metrics as keras_metrics
 
 from preprocessing import SQUARE_SIZE, to_luminance
 
-# --- CONFIGURAZIONE ---
+# --- CONFIGURATION ---
 TRAIN_DIR = os.path.join("dataset", "train")
 VAL_DIR = os.path.join("dataset", "validation")
 OUTPUT_MODEL_PATH = os.path.join("models", "drowsiness_model.keras")
@@ -49,18 +49,18 @@ EVAL_DIR = os.path.join("models", "evaluation")
 
 BATCH_SIZE = 32
 EPOCHS = 20
-CLASSES = ["not_drowsy", "drowsy"]  # indice 1 = drowsy = classe positiva del sigmoid
+CLASSES = ["not_drowsy", "drowsy"]  # index 1 = drowsy = sigmoid positive class
 PARAM_BUDGET = 2_000_000
-USE_CLASS_WEIGHT = False  # test diagnostico: isolare effetto class_weight dal preprocessing
+USE_CLASS_WEIGHT = False  # diagnostic test: isolate the class_weight effect from preprocessing
 
 
 def build_model(input_shape=SQUARE_SIZE + (3,)):
     """
-    CNN custom leggera: 4 blocchi Conv2D+BatchNorm+MaxPooling con filtri
-    crescenti, seguiti da GlobalAveragePooling2D (al posto di Flatten+Dense
-    grande, che farebbe esplodere il conteggio parametri) e una piccola testa
-    densa. Tenuta volutamente sotto i 2M parametri: niente transfer learning,
-    niente reti pesanti (vincolo di progetto).
+    Lightweight custom CNN: 4 Conv2D+BatchNorm+MaxPooling blocks with
+    increasing filter counts, followed by GlobalAveragePooling2D (instead of
+    a large Flatten+Dense, which would blow up the parameter count) and a
+    small dense head. Deliberately kept under 2M parameters: no transfer
+    learning, no heavy networks (project constraint).
     """
     inputs = layers.Input(shape=input_shape)
 
@@ -89,11 +89,11 @@ def build_model(input_shape=SQUARE_SIZE + (3,)):
 
 
 def build_generators():
-    # Augmentation SOLO in training. La validation deve restare "pulita" per
-    # misurare le prestazioni reali, senza distorsioni artificiali.
-    # flow_from_directory carica RGB e ridimensiona a SQUARE_SIZE (quadrato,
-    # forza lo stretch se l'aspect ratio originale non e' 1:1); poi
-    # to_luminance converte a Y (YCbCr) come preprocessing_function.
+    # Augmentation ONLY in training. Validation must stay "clean" to
+    # measure real performance, without artificial distortions.
+    # flow_from_directory loads RGB and resizes to SQUARE_SIZE (square,
+    # forces the stretch if the original aspect ratio isn't 1:1); then
+    # to_luminance converts to Y (YCbCr) as the preprocessing_function.
     train_datagen = ImageDataGenerator(
         rescale=1.0 / 255,
         rotation_range=15,
@@ -122,7 +122,7 @@ def build_generators():
         batch_size=BATCH_SIZE,
         class_mode="binary",
         classes=CLASSES,
-        shuffle=False,  # ordine fisso: serve per far combaciare y_true e y_pred
+        shuffle=False,  # fixed order: needed to line up y_true and y_pred
     )
     return train_gen, val_gen
 
@@ -133,13 +133,13 @@ def plot_training_curves(history, output_path):
     axes[0].plot(history.history["loss"], label="train_loss")
     axes[0].plot(history.history["val_loss"], label="val_loss")
     axes[0].set_title("Loss")
-    axes[0].set_xlabel("Epoca")
+    axes[0].set_xlabel("Epoch")
     axes[0].legend()
 
     axes[1].plot(history.history["accuracy"], label="train_accuracy")
     axes[1].plot(history.history["val_accuracy"], label="val_accuracy")
     axes[1].set_title("Accuracy")
-    axes[1].set_xlabel("Epoca")
+    axes[1].set_xlabel("Epoch")
     axes[1].legend()
 
     fig.tight_layout()
@@ -181,7 +181,7 @@ def plot_roc_curve(y_true, y_prob, output_path):
 def evaluate(model, val_gen):
     os.makedirs(EVAL_DIR, exist_ok=True)
 
-    y_true = val_gen.classes  # ordine fisso (shuffle=False)
+    y_true = val_gen.classes  # fixed order (shuffle=False)
     y_prob = model.predict(val_gen).flatten()
     y_pred = (y_prob > 0.5).astype(int)
 
@@ -210,9 +210,9 @@ def evaluate(model, val_gen):
 
 def compute_class_weights():
     """
-    Pesi di classe (formula 'balanced': n_totale / (n_classi * n_campioni_classe)).
-    Il train set e' sbilanciato (~1.3:1 drowsy/not_drowsy), i pesi
-    compensano dando piu' peso alla classe minoritaria in loss.
+    Class weights ('balanced' formula: total_n / (n_classes * class_sample_count)).
+    The train set is imbalanced (~1.3:1 drowsy/not_drowsy), the weights
+    compensate by giving more weight to the minority class in the loss.
     """
     counts = {}
     for idx, class_name in enumerate(CLASSES):
@@ -260,7 +260,7 @@ def train():
     early_stop = callbacks.EarlyStopping(
         monitor="val_loss",
         patience=3,
-        min_delta=1e-3,  # miglioramenti sotto questa soglia non contano (rumore)
+        min_delta=1e-3,  # improvements below this threshold don't count (noise)
         restore_best_weights=True,
     )
 

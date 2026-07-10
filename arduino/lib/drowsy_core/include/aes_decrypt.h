@@ -5,19 +5,20 @@
 
 #define AES_DECRYPT_MAX_DECODED_SIZE 256
 
-// Decifra un payload AES-256-CBC codificato in base64. Formato atteso
-// (identico a SecurityManager.encrypt_data lato Python): i primi 16 byte
-// decodificati sono l'IV, il resto e' il testo cifrato con padding PKCS7.
+// Decrypts a base64-encoded AES-256-CBC payload. Expected format
+// (identical to SecurityManager.encrypt_data on the Python side): the
+// first 16 decoded bytes are the IV, the rest is the ciphertext with
+// PKCS7 padding.
 //
-// key:              puntatore a 32 byte (256 bit) di chiave AES.
-// base64_payload:   stringa C, il payload cifrato ricevuto via MQTT.
-// out_buffer:       buffer di output per il testo decifrato (JSON in
-//                   chiaro), scritto come stringa C (null-terminated).
-// out_buffer_size:  dimensione di out_buffer.
+// key:              pointer to 32 bytes (256 bits) of AES key.
+// base64_payload:   C string, the encrypted payload received via MQTT.
+// out_buffer:       output buffer for the decrypted plaintext (JSON),
+//                   written as a C string (null-terminated).
+// out_buffer_size:  size of out_buffer.
 //
-// Ritorna: lunghezza del testo decifrato (senza padding, senza il \0), o -1
-// in caso di errore (base64 invalido, buffer troppo piccolo, payload troppo
-// corto per contenere IV+almeno un blocco).
+// Returns: length of the decrypted text (without padding, without the
+// \0), or -1 on error (invalid base64, buffer too small, payload too
+// short to contain IV+at least one block).
 int aes_decrypt(
     const char* base64_payload,
     const uint8_t* key,

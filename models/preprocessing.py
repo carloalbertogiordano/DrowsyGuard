@@ -1,7 +1,7 @@
 """
-Preprocessing condiviso: conversione a luminanza (canale Y di YCbCr) su
-immagine quadrata. Nessun crop, nessun filtro (cascade Haar abbandonato:
-troppi scarti / falsi rilevamenti, vedi discussione progetto).
+Shared preprocessing: conversion to luminance (Y channel of YCbCr) on a
+square image. No crop, no filter (Haar cascade approach abandoned: too many
+discards / false detections, see project discussion).
 """
 
 import numpy as np
@@ -12,21 +12,21 @@ SQUARE_SIZE = (96, 96)
 
 def to_luminance(image: np.ndarray) -> np.ndarray:
     """
-    Costruisce un tensore a 3 canali (Y, B, R): Y = luminanza (da YCbCr),
-    B e R = canali blu e rosso grezzi dall'immagine RGB originale. L'immagine
-    in input e' gia' quadrata (resize fatto a monte, es. da
+    Builds a 3-channel tensor (Y, B, R): Y = luminance (from YCbCr), B and R
+    = raw blue and red channels from the original RGB image. The input
+    image is already square (resize done upstream, e.g. by
     flow_from_directory).
 
-    Perche' 3 canali (non solo Y): il backend GPU Intel (ITEX/oneDNN) non
-    supporta la convoluzione con input a 1 solo canale (errore "output depth
-    must be evenly divisible by number of groups") -- serve comunque un
-    input a 3 canali per la prima Conv2D. Il conteggio parametri della rete
-    NON dipende dal contenuto dei canali (solo dal numero), quindi tanto
-    vale mettere 3 canali con informazione reale (Y, B, R) invece di
-    replicare Y tre volte.
+    Why 3 channels (not just Y): the Intel GPU backend (ITEX/oneDNN) does
+    not support convolution with a single-channel input (error "output
+    depth must be evenly divisible by number of groups") -- a 3-channel
+    input is required anyway for the first Conv2D. The network's parameter
+    count does NOT depend on channel content (only on the count), so we
+    might as well put 3 channels with real information (Y, B, R) instead of
+    replicating Y three times.
 
-    Input: (H, W, 3) RGB, valori 0..255.
-    Output: (H, W, 3) float32, valori 0..255 -- canali [Y, B, R].
+    Input: (H, W, 3) RGB, values 0..255.
+    Output: (H, W, 3) float32, values 0..255 -- channels [Y, B, R].
     """
     ycc = cv2.cvtColor(image.astype("uint8"), cv2.COLOR_RGB2YCrCb)
     y = ycc[:, :, 0]

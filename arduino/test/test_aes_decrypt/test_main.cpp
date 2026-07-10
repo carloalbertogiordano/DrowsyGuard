@@ -5,10 +5,10 @@
 void setUp(void) {}
 void tearDown(void) {}
 
-// Vettore di test generato con SecurityManager.encrypt_data() lato Python
-// (chiave di TEST dedicata, mai la chiave reale del progetto -- vedi
-// security/key.py, quella non va mai in un file committato).
-// Verifica l'interoperabilita' Python <-> C++ dello schema AES-256-CBC.
+// Test vector generated with SecurityManager.encrypt_data() on the Python
+// side (dedicated TEST key, never the real project key -- see
+// security/key.py, that one must never go into a committed file).
+// Verifies Python <-> C++ interoperability of the AES-256-CBC scheme.
 
 void test_decrypts_known_payload(void) {
     const uint8_t* key = (const uint8_t*)"0123456789ABCDEF0123456789ABCDEF";
@@ -29,7 +29,7 @@ void test_returns_negative_on_buffer_too_small(void) {
     const char* base64_payload =
         "6LrTeum1xGVB7Oxc8IItvbuJ6UE1AuN87cGiMSy4a/kuF1Nj24+WdrTOPoKvKXoEtDQALRW0UF7wvSWyemLf4LiTXqUb7JQ8BCAr7UREvFmfuHPQVgWF+0EzvawlSM/g+CxJBN+ZNWypiHgtyexjCQ==";
 
-    char out_buffer[4];  // troppo piccolo per contenere il risultato
+    char out_buffer[4];  // too small to hold the result
     int len = aes_decrypt(base64_payload, key, out_buffer, sizeof(out_buffer));
 
     TEST_ASSERT_EQUAL_INT(-1, len);

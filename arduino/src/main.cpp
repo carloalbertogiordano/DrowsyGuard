@@ -11,7 +11,7 @@
 
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
-RealBuzzer buzzer(2);  // pin GPIO 2, cambia se serve
+RealBuzzer buzzer(2);  // GPIO pin 2, change if needed
 TelemetryHandler handler(buzzer, 2000);
 const uint8_t aesKey[32] = AES_KEY_BYTES;
 

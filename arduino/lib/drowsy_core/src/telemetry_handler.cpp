@@ -26,7 +26,7 @@ void TelemetryHandler::onMessage(const char* decrypted_json, unsigned long now_m
 
 void TelemetryHandler::update(unsigned long now_ms) {
     if (!is_active_) return;
-        // Time elapsed             >= buzzer duration
+        // Time elapsed        >= buzzer duration
     if ((now_ms - last_trigger_ms_) >= buzz_duration_ms_) {
         buzzer_.stop();
         is_active_ = false;

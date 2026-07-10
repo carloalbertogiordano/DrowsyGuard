@@ -2,9 +2,9 @@
 
 #include "IBuzzer.h"
 
-// Mock per i test nativi (PC): non pilota nessun pin reale, registra solo
-// se/quante volte start()/stop() sono state chiamate -- stesso ruolo dei
-// mock unittest.mock lato Python (es. mock_pwm_instance.start.assert_called...).
+// Mock for native (PC) tests: does not drive any real pin, just records
+// whether/how many times start()/stop() were called -- same role as the
+// unittest.mock mocks on the Python side (e.g. mock_pwm_instance.start.assert_called...).
 class MockBuzzer : public IBuzzer {
 public:
     int start_calls = 0;

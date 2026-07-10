@@ -32,9 +32,9 @@ class TestAlertNotifier(TestCase):
         notifier.publish_via_mqtt(timestamp="2026-07-09 20:12:00", confidence=0.85)
 
         # --- ASSERT ---
-        # topic corretto, payload = ANY perche' e' cifrato (stringa diversa ogni volta per IV random)
+        # correct topic, payload = ANY because it's encrypted (different string each time due to random IV)
         mock_instance.publish.assert_called_once_with("v1/devices/me/telemetry", ANY)
-        # il payload pubblicato deve essere una stringa (base64), non il dict in chiaro
+        # the published payload must be a string (base64), not the plain dict
         published_payload = mock_instance.publish.call_args[0][1]
         self.assertIsInstance(published_payload, str)
 
@@ -46,7 +46,7 @@ class TestAlertNotifier(TestCase):
         notifier = AlertNotifier()
         notifier._connected = True
 
-        # --- ACT 1: primo rilevamento ---
+        # --- ACT 1: first detection ---
         notifier.notify(drowsy_detected=True, timestamp="10:00:00", confidence=0.90)
 
         # --- ASSERT 1 ---
@@ -55,10 +55,10 @@ class TestAlertNotifier(TestCase):
 
         mock_instance.publish.reset_mock()
 
-        # --- ACT 2: rilevamento consecutivo (stesso stato) ---
+        # --- ACT 2: consecutive detection (same state) ---
         notifier.notify(drowsy_detected=True, timestamp="10:00:01", confidence=0.92)
 
-        # --- ASSERT 2: nessuna nuova pubblicazione ---
+        # --- ASSERT 2: no new publish ---
         mock_instance.publish.assert_not_called()
 
     @patch.object(mqtt, 'Client')
@@ -69,7 +69,7 @@ class TestAlertNotifier(TestCase):
         notifier = AlertNotifier()
         notifier.is_alert_active = True
         notifier.last_alarm_trigger_time = 1000.0
-        mock_time.return_value = 1005.0  # 5s dopo, > min_alarm_duration (2s)
+        mock_time.return_value = 1005.0  # 5s later, > min_alarm_duration (2s)
 
         # --- ACT ---
         notifier.notify(drowsy_detected=False, timestamp="12:00:00", confidence=0.0)

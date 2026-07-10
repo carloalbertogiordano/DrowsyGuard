@@ -7,7 +7,7 @@ static int8_t decode_char(char c) {
     if (c >= '0' && c <= '9') return c - '0' + 52;
     if (c == '+') return 62;
     if (c == '/') return 63;
-    return -1;  // '=' (padding) o carattere non valido
+    return -1;  // '=' (padding) or invalid character
 }
 
 int base64_decode(const char* input, uint8_t* out_buffer, size_t out_buffer_size) {

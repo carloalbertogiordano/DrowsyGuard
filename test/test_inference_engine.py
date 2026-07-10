@@ -10,7 +10,7 @@ class TestInferenceEngine(TestCase):
     @patch('src.inference_engine.tflite.Interpreter')
     @patch('os.path.exists')
     def test_loads_model_with_given_path(self, mock_exists, mock_interpreter_class):
-        """L'Interpreter deve essere istanziato con il percorso corretto."""
+        """The Interpreter must be instantiated with the correct path."""
         # --- ARRANGE ---
         mock_exists.return_value = True
         mock_interpreter_instance = mock_interpreter_class.return_value
@@ -29,7 +29,7 @@ class TestInferenceEngine(TestCase):
     @patch('src.inference_engine.tflite.Interpreter')
     @patch('os.path.exists')
     def test_predict_returns_float(self, mock_exists, mock_interpreter_class):
-        """predict deve eseguire il flusso TFLite e ritornare una probabilita' float."""
+        """predict must run the TFLite flow and return a float probability."""
         # --- ARRANGE ---
         mock_exists.return_value = True
         mock_interpreter_instance = mock_interpreter_class.return_value
@@ -39,7 +39,7 @@ class TestInferenceEngine(TestCase):
         ]
         mock_interpreter_instance.get_output_details.return_value = [{'index': 20}]
 
-        # Il "risultato" finto dell'inferenza
+        # The fake inference "result"
         mock_interpreter_instance.get_tensor.return_value = np.array([[0.8]], dtype=np.float32)
 
         engine = ie_module.InferenceEngine(model_path="models/dummy.tflite")
@@ -59,7 +59,7 @@ class TestInferenceEngine(TestCase):
     @patch('src.inference_engine.tflite.Interpreter')
     @patch('os.path.exists')
     def test_raises_when_model_file_missing(self, mock_exists, mock_interpreter_class):
-        """Se il file .tflite non esiste, deve sollevare FileNotFoundError."""
+        """If the .tflite file does not exist, it must raise FileNotFoundError."""
         # --- ARRANGE ---
         mock_exists.return_value = False
 
@@ -67,5 +67,5 @@ class TestInferenceEngine(TestCase):
         self.assertRaises(
             FileNotFoundError,
             ie_module.InferenceEngine,
-            model_path="models/non_esiste.tflite"
+            model_path="models/does_not_exist.tflite"
         )
