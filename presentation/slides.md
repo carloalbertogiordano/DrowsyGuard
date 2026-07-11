@@ -163,9 +163,9 @@ Embedded Systems, Course Project (Prof. Simone Romano, Prof. Giuseppe Scaniello)
 
 <!--
 Welcome. This is DrowsyGuard, a secure driver drowsiness detection system,
-built for the Embedded Systems course. It's an
-architectural clone of the example fire-detector project, adapted to a
-different domain: detecting when a driver is falling asleep at the wheel.
+built for the Embedded Systems course. It detects when a driver is
+falling asleep at the wheel and reacts locally and over an encrypted
+channel.
 
 Ten minutes total. I'll walk through: the problem, the architecture, how
 it was built (TDD), the model and its real results, the security layer,
@@ -244,8 +244,8 @@ Let's start with how the system is put together.
 try/except fallback to the real <code>RPi.GPIO</code> when actually deployed on a Pi.</p>
 
 <!--
-Same pattern as the fire-detector template, applied to this domain. Each
-box is a class with one job, wired together by dependency injection. That
+Five components, each a class with one job, wired together by
+dependency injection. That
 last point about mocked GPIO is what makes this whole thing testable and
 runnable on a laptop with zero physical hardware -- the code that would
 run on a real Pi imports RPi.GPIO, and everywhere else, including this
