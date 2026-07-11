@@ -13,9 +13,19 @@
 // cleared. Kept inside RealBuzzer (real-hardware-only, not compiled in the
 // native test env) so IBuzzer/TelemetryHandler and their tests are
 // untouched. Remove the matrix_ calls once the real buzzer is wired.
+//
+// NOTE: hardware init (pinMode/matrix_.begin()) lives in begin(), NOT the
+// constructor. `buzzer` is a global object, so its constructor runs during
+// C++ static init, before the board's own init() (clocks/peripherals) has
+// executed. matrix_.begin() allocates an FSP hardware timer for the LED
+// refresh ISR -- doing that too early makes the allocation silently fail
+// (loadFrame() still "works" in software, but nothing physically lights
+// up). Must call buzzer.begin() from setup(), after the board is ready.
 class RealBuzzer : public IBuzzer {
 public:
-    explicit RealBuzzer(uint8_t pin) : pin_(pin) {
+    explicit RealBuzzer(uint8_t pin) : pin_(pin) {}
+
+    void begin() {
         pinMode(pin_, OUTPUT);
         digitalWrite(pin_, LOW);
         matrix_.begin();
