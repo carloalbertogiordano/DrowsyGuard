@@ -1,8 +1,8 @@
               precision    recall  f1-score   support
 
-  not_drowsy     0.7105    0.7507    0.7301      1007
-      drowsy     0.7987    0.7638    0.7809      1304
+  not_drowsy     0.7560    0.7352    0.7454      2073
+      drowsy     0.7813    0.7994    0.7902      2453
 
-    accuracy                         0.7581      2311
-   macro avg     0.7546    0.7573    0.7555      2311
-weighted avg     0.7603    0.7581    0.7587      2311
+    accuracy                         0.7700      4526
+   macro avg     0.7686    0.7673    0.7678      4526
+weighted avg     0.7697    0.7700    0.7697      4526

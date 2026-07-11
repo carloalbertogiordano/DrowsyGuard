@@ -16,6 +16,10 @@ __pycache__/
 
 # Dataset (scaricato localmente, non versionato)
 dataset/*
+# Filtered/deduplicated dataset derivatives (rigenerabili con
+# filter_dataset.py + prepare_akahana.py + dedupe_split.py)
+dataset_filtered/
+dataset_dedup/
 
 # Cache compilazione kernel GPU (Intel NEO/oneAPI, specifica di macchina/driver)
 .gpu-cache/

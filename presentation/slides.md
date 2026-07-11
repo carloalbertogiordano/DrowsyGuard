@@ -326,8 +326,8 @@ backend, so real signal fills all three instead of a duplicate).
 <div>
 
 **Model.** Custom CNN, **341,121 parameters** (under the 2M budget),
-**no transfer learning**. Dataset: HuggingFace `driver-drowsiness-dataset`,
-18,492 train / 2,311 val / 2,313 test.
+**no transfer learning**. Dataset: 2 HuggingFace sources merged, face-filtered,
+deduplicated (details next slide) after finding real data leakage.
 
 <div class="box">
 Counter-intuitive: <code>class_weight='balanced'</code> made results
@@ -361,12 +361,14 @@ stopping. Removing it gave the most balanced result of any run.
 <div class="cols">
 <div>
 
-<div class="metric"><span class="n">75.8%</span><span class="l">accuracy</span></div>
-<div class="metric"><span class="n">0.756</span><span class="l">macro F1</span></div>
-<div class="metric"><span class="n">0.751 / 0.764</span><span class="l">recall (not-drowsy / drowsy)</span></div>
+<div class="metric"><span class="n">78.9%</span><span class="l">accuracy</span></div>
+<div class="metric"><span class="n">0.896</span><span class="l">AUC</span></div>
+<div class="metric"><span class="n">0.735 / 0.799</span><span class="l">recall (not-drowsy / drowsy)</span></div>
 
-<p class="small">Below the original 85% target, kept as-is deliberately: balanced
-recall on both classes matters more here than a higher but skewed accuracy.</p>
+<p class="small">First trustworthy number in the project: a live test led to finding
+data leakage in <b>both</b> merged datasets (86.7% / 99.6% near-duplicate overlap
+between train/validation), fixed via near-duplicate clustering. Every earlier,
+higher number (75.8%, 82.7%, 91.7%) was inflated by it.</p>
 
 </div>
 <div>
@@ -377,13 +379,18 @@ recall on both classes matters more here than a higher but skewed accuracy.</p>
 </div>
 
 <!--
-I'm presenting this deliberately as-is rather than rounding up. 75.8%
-accuracy, below the original 85% target. What I'd emphasize is that the
-two classes are fairly balanced -- recall of 0.75 and 0.76 -- which for a
-safety alarm matters more than a higher accuracy that comes from being
-much better at one class than the other. Training was paused here as a
-deliberate checkpoint rather than chasing the number further this
-session.
+This number has a story. Earlier runs reported 75.8%, then 82.7% with
+augmentation, then 91.7% after merging a second dataset -- each looked
+like progress. A live test made me suspicious of that last one: too
+good, too fast. Checked with perceptual hashing, and found 99.6% of
+validation images had a near-duplicate sitting in training, from
+unlabeled burst frames in the same recording session. Checked the
+original dataset too, out of caution -- 86.7% leakage there as well,
+present since the very first run, never caught. Rebuilt the split from
+scratch clustering near-duplicates together, never splitting one across
+train and validation. 78.9% is what's left once you can't cheat by
+memorizing near-identical frames. Lower, and the first number here I'd
+actually defend.
 -->
 
 ---
@@ -540,11 +547,12 @@ camera frame. Physical bring-up earned its place in the schedule.
 Verified working, face close to the camera (dashboard-style framing).
 
 <div class="box">
-<b>Known limitation, not a bug:</b> the model needs the face to fill most
-of the frame: training data is close-up crops, so a small/distant face
-at 96×96 loses eye detail entirely. Documented as a deployment
-constraint: mount the camera close to the driver, like a real DMS camera,
-not a general-purpose room webcam.
+<b>Known limitation, still open:</b> live behavior is sensitive to exact
+distance/position. Quantified cause: the two merged training sources sit
+at very different face-to-frame scales (74% vs 11.7% average), so a lot
+of real eye detail is lost for the smaller-scale source once resized to
+96×96. Next steps identified (single-source retrain with stronger zoom
+augmentation, or a higher input resolution) but not yet tried.
 </div>
 
 <!--

@@ -42,8 +42,14 @@ from tensorflow.keras import layers, models, callbacks, metrics as keras_metrics
 from preprocessing import SQUARE_SIZE, to_luminance
 
 # --- CONFIGURATION ---
-TRAIN_DIR = os.path.join("dataset", "train")
-VAL_DIR = os.path.join("dataset", "validation")
+# dataset_dedup/: dataset_filtered/ (macro-eye-crop subset removed, see
+# filter_dataset.py) with train/validation/test rebuilt via near-duplicate
+# clustering (see dedupe_split.py) -- the naive per-image random split
+# put near-identical frames from the same recording session on both
+# sides of the split, inflating every accuracy number measured before
+# this. Whole clusters are now kept together in a single split.
+TRAIN_DIR = os.path.join("dataset_dedup", "train")
+VAL_DIR = os.path.join("dataset_dedup", "validation")
 OUTPUT_MODEL_PATH = os.path.join("models", "drowsiness_model.keras")
 EVAL_DIR = os.path.join("models", "evaluation")
 
@@ -101,6 +107,8 @@ def build_generators():
         height_shift_range=0.1,
         zoom_range=0.1,
         horizontal_flip=True,
+        brightness_range=[0.5, 1.5],
+        channel_shift_range=40.0,
         preprocessing_function=to_luminance,
     )
     val_datagen = ImageDataGenerator(
