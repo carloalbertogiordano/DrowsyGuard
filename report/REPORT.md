@@ -106,6 +106,14 @@ One finding along the way was genuinely counter-intuitive. The training set has 
 | **accuracy** | | | **0.758** | 2311 |
 | macro avg | 0.755 | 0.757 | 0.756 | 2311 |
 
+![Confusion matrix](images/confusion_matrix.png)
+
+![ROC curve](images/roc_curve.png)
+
+![Training curves](images/training_curves.png)
+
+The training curves show a mild overfitting onset after epoch 7, caught correctly by early stopping at epoch 10 before it could widen further. The confusion matrix and ROC curve give the same balanced picture as the precision/recall table above: errors are spread across both classes rather than concentrated in one.
+
 Overall accuracy on the held-out test set is 75.8%, below the original 85% target set at the start of the project. This number is reported as measured, without rounding it up or leaving it out. Training was deliberately not resumed to chase a higher number; that was an explicit, time-constrained scope decision, documented again in §11 as a "will not fix" item, and not something that was simply overlooked.
 
 What matters more than the headline number, for a system whose entire purpose is raising an alarm, is how the errors are distributed between the two classes. Precision here is, out of everything the model called "drowsy," how much actually was; recall is, out of everything that actually was drowsy, how much the model caught. A model that is very accurate only because it is extremely good at the majority class and weak on the other is a worse safety system than one with slightly lower accuracy but balanced recall across both classes, because the failure mode that matters most, missing an actually drowsy driver, is exactly what recall on the "drowsy" class measures. Here recall is 0.751 for not_drowsy and 0.764 for drowsy, close enough to each other that the model is not simply defaulting to one answer to look good on paper. That balance, more than the 75.8% figure itself, is the result this project is willing to stand behind.
@@ -140,6 +148,8 @@ Starting from a genuinely not-drowsy sample, correctly classified at 0.41, the o
 ## 8. Arduino Hardware Companion
 
 Every component described so far runs entirely emulated: there is no physical Raspberry Pi anywhere in this project, and GPIO access is mocked throughout, by design (§4). That is a deliberate scope decision, not an oversight, but it does mean that without something extra, DrowsyGuard would never actually make a sound or light up an LED anywhere in the real world. To close that gap, a genuinely physical companion device was built: an Arduino Uno R4 WiFi that subscribes to the same encrypted MQTT topic `AlertNotifier` publishes to, and reacts to it on real hardware, independent of whether the Raspberry Pi side is emulated or not. This also mirrors how a real deployment would likely work: the perception and decision logic lives on a more capable device, while the actual alarm hardware is a small, cheap, dedicated microcontroller.
+
+It is worth being explicit about a design choice that can look redundant at first glance: `AlertNotifier` still drives a Pi-side GPIO buzzer through PWM (§4, §7.1) even though the Arduino is the device that actually produces a physical alarm. This is intentional, not leftover code from before the Arduino existed. The Pi-side buzzer path exists to satisfy the course's own requirement of demonstrating GPIO control on the Raspberry Pi directly, independent of any other device on the network. The Arduino path exists to demonstrate what a real deployment would look like, with the alarm hardware living on its own dedicated microcontroller rather than wired straight into the perception device. The two paths serve two different purposes and were designed together, not one on top of the other.
 
 ```
 MQTT receive -> AES-256-CBC decrypt (on-device) -> TelemetryHandler -> alarm
