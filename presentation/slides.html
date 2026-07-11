@@ -1914,7 +1914,7 @@ li::marker { color: var(--accent2); }
 <b>Why:</b> the Pi's own buzzer is mocked/didactic; the <b>real</b> physical alarm
 is this board reacting to encrypted MQTT<br />
 <b>tiny-AES-c</b> (vendored, forced to AES-256) decrypts on-device<br />
-<b>Built-in 12×8 LED matrix</b> stands in for the buzzer, not wired yet
+<b>Built-in 12×8 LED matrix</b> fires alongside the real buzzer, extra visual cue
 </div>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="13" data-paginate="true" data-theme="default" data-style="@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&amp;display=swap');
@@ -2942,10 +2942,10 @@ hardware instead of stopping at &quot;it works in the emulator.&quot;</p></div><
 physical Pi, mocked GPIO throughout. So to have a genuinely physical
 alarm, I built a companion: an Arduino Uno R4 WiFi that subscribes to
 the same encrypted MQTT topic, decrypts it on-device with a vendored
-AES implementation, and drives an alarm. Since I don't have a physical
-buzzer wired up yet, it temporarily drives the board's built-in LED
-matrix instead -- same interface, swappable later, clearly marked as
-temporary in the code.</p></div><div class="bespoke-marp-note" data-index="12" tabindex="0"><p>None of these three bugs showed up in the unit test suite -- and that's
+AES implementation, and drives an alarm. The buzzer is real and
+working; alongside it, the board's built-in LED matrix also lights up,
+since the hardware's already there and it gives a second, unmistakable
+confirmation of the alarm state.</p></div><div class="bespoke-marp-note" data-index="12" tabindex="0"><p>None of these three bugs showed up in the unit test suite -- and that's
 the point I want to make with this slide. All three only surfaced once
 the system ran end to end on real hardware and real input. A wrong WiFi
 network. A hardware timer silently failing because of C++ static

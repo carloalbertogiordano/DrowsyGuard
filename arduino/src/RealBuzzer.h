@@ -7,12 +7,14 @@
 // Real implementation of IBuzzer: drives an actual GPIO pin on the board.
 // Counterpart of MockBuzzer (used in native tests).
 //
-// TEMPORARY: no physical buzzer wired yet, so start()/stop() also drive the
-// Uno R4 WiFi's built-in LED matrix (monochrome 12x8, ships with the
-// renesas-ra core) as a visual stand-in -- all LEDs on = alarm, off =
-// cleared. Kept inside RealBuzzer (real-hardware-only, not compiled in the
+// start()/stop() also drive the Uno R4 WiFi's built-in LED matrix
+// (monochrome 12x8, ships with the renesas-ra core) alongside the real
+// buzzer -- all LEDs on = alarm, off = cleared. Not a stand-in for the
+// buzzer, both fire together; the matrix is free hardware already on the
+// board, so it gives a second, unmistakable confirmation of the alarm
+// state. Kept inside RealBuzzer (real-hardware-only, not compiled in the
 // native test env) so IBuzzer/TelemetryHandler and their tests are
-// untouched. Remove the matrix_ calls once the real buzzer is wired.
+// untouched.
 //
 // NOTE: hardware init (pinMode/matrix_.begin()) lives in begin(), NOT the
 // constructor. `buzzer` is a global object, so its constructor runs during

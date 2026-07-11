@@ -481,7 +481,7 @@ hardware instead of stopping at "it works in the emulator."
 <b>Why:</b> the Pi's own buzzer is mocked/didactic; the <b>real</b> physical alarm
 is this board reacting to encrypted MQTT<br>
 <b>tiny-AES-c</b> (vendored, forced to AES-256) decrypts on-device<br>
-<b>Built-in 12×8 LED matrix</b> stands in for the buzzer, not wired yet
+<b>Built-in 12×8 LED matrix</b> fires alongside the real buzzer, extra visual cue
 </div>
 
 <!--
@@ -489,10 +489,10 @@ The Raspberry Pi side runs entirely emulated in this project -- no
 physical Pi, mocked GPIO throughout. So to have a genuinely physical
 alarm, I built a companion: an Arduino Uno R4 WiFi that subscribes to
 the same encrypted MQTT topic, decrypts it on-device with a vendored
-AES implementation, and drives an alarm. Since I don't have a physical
-buzzer wired up yet, it temporarily drives the board's built-in LED
-matrix instead -- same interface, swappable later, clearly marked as
-temporary in the code.
+AES implementation, and drives an alarm. The buzzer is real and
+working; alongside it, the board's built-in LED matrix also lights up,
+since the hardware's already there and it gives a second, unmistakable
+confirmation of the alarm state.
 -->
 
 ---
