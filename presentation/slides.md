@@ -302,7 +302,7 @@ eyeballing the code and guessing what looks wrong.
 
 # The Model
 
-<p>Preprocessing, architecture, and honest results</p>
+<p>Preprocessing, architecture, and results</p>
 
 <!--
 Now the perception side: how the system actually decides "drowsy" or not.
@@ -676,8 +676,8 @@ src and the Arduino core stayed mine throughout, by design.
 <p class="small">DrowsyGuard, Embedded Systems</p>
 
 <!--
-That's the full loop: five testable components, a lightweight custom CNN
-with honestly reported results, encrypted telemetry with a demonstrated
+That's the full loop: five testable components, a lightweight custom CNN,
+encrypted telemetry with a demonstrated
 attack and defense, and a physical Arduino companion that surfaced three
 real bugs no unit test could have caught. Happy to take questions, or to
 go deeper on any part of this -- the model, the security layer, or the
