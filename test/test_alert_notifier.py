@@ -111,3 +111,82 @@ class TestAlertNotifier(TestCase):
 
         # --- ASSERT ---
         mock_pwm_instance.stop.assert_called_once()
+
+    @patch('src.alert_notifier.mqtt.Client')
+    @patch.object(GPIO, "PWM")
+    @patch('time.time')
+    def test_buzzer_stays_on_before_min_duration_elapses(self, mock_time, mock_pwm_class, mock_mqtt_class):
+        # --- ARRANGE ---
+        mock_pwm_instance = MagicMock()
+        mock_pwm_class.return_value = mock_pwm_instance
+        mock_mqtt_class.return_value = MagicMock()
+        notifier = AlertNotifier()
+        notifier.alarm_state.is_active = True
+        notifier.alarm_state.last_trigger_time = 1000.0
+        mock_time.return_value = 1001.0  # 1s later, < min_alarm_duration (2s)
+
+        # --- ACT ---
+        notifier.notify(drowsy_detected=False, timestamp="12:00:00", confidence=0.9)
+
+        # --- ASSERT: still active, buzzer must NOT stop yet ---
+        self.assertTrue(notifier.alarm_state.is_active)
+        mock_pwm_instance.stop.assert_not_called()
+
+    @patch.object(mqtt, 'Client')
+    def test_notify_false_when_never_active_is_a_no_op(self, mock_client_class):
+        # --- ARRANGE ---
+        mock_client_class.return_value = MagicMock()
+        notifier = AlertNotifier()
+
+        # --- ACT: drowsy=False, alarm was never triggered ---
+        notifier.notify(drowsy_detected=False, timestamp="12:00:00", confidence=0.1)
+
+        # --- ASSERT: nothing to clear, stays inactive ---
+        self.assertFalse(notifier.alarm_state.is_active)
+
+    @patch.object(mqtt, 'Client')
+    def test_on_connect_sets_connected_flag_on_success(self, mock_client_class):
+        # --- ARRANGE ---
+        mock_client_class.return_value = MagicMock()
+        notifier = AlertNotifier()
+
+        # --- ACT: real paho-mqtt contract, rc=0 means success ---
+        notifier._on_connect(client=None, userdata=None, flags=None, rc=0)
+
+        # --- ASSERT ---
+        self.assertTrue(notifier._connected)
+
+    @patch.object(mqtt, 'Client')
+    def test_on_connect_does_not_set_connected_flag_on_failure(self, mock_client_class):
+        # --- ARRANGE ---
+        mock_client_class.return_value = MagicMock()
+        notifier = AlertNotifier()
+
+        # --- ACT: rc != 0 means the broker refused the connection ---
+        notifier._on_connect(client=None, userdata=None, flags=None, rc=1)
+
+        # --- ASSERT ---
+        self.assertFalse(notifier._connected)
+
+    @patch.object(mqtt, 'Client')
+    def test_on_disconnect_after_never_connecting_does_not_raise(self, mock_client_class):
+        # --- ARRANGE ---
+        mock_client_class.return_value = MagicMock()
+        notifier = AlertNotifier()
+
+        # --- ACT / ASSERT: must not raise (only exercises the log path) ---
+        notifier._on_disconnect(client=None, userdata=None, rc=1)
+
+    @patch.object(mqtt, 'Client')
+    def test_publish_via_mqtt_does_nothing_when_not_connected(self, mock_client_class):
+        # --- ARRANGE ---
+        mock_instance = MagicMock()
+        mock_client_class.return_value = mock_instance
+        notifier = AlertNotifier()
+        # _connected left at its default (False) -- broker never confirmed connection
+
+        # --- ACT ---
+        notifier.publish_via_mqtt(timestamp="12:00:00", confidence=0.9)
+
+        # --- ASSERT: guarded, no publish attempted ---
+        mock_instance.publish.assert_not_called()

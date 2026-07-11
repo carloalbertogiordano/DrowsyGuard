@@ -12,6 +12,8 @@ void TelemetryHandler::onMessage(const char* decrypted_json, unsigned long now_m
     if (err) return;
     const char* status = jdoc["status"];
 
+    if (status == nullptr) {return;}
+
     if (strncmp(status, "DROWSY_DETECTED", 15) == 0) {
         last_trigger_ms_ = now_ms;
         

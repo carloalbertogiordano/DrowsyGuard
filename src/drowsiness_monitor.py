@@ -60,4 +60,5 @@ class DrowsinessMonitor:
         self.is_running = False
 
     def _cleanup(self):
+        self.alert_notifier.cleanup()
         cv2.destroyAllWindows()

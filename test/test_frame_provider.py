@@ -55,6 +55,20 @@ class TestFrameProvider(unittest.TestCase):
         self.assertTrue(np.array_equal(result, fake_frame))
         mock_capturer.set.assert_called_with(cv2.CAP_PROP_POS_FRAMES, 0)
 
+    @patch.object(cv2, 'VideoCapture')
+    def test_get_frame_raises_when_rewind_also_fails(self, video_capture: MagicMock):
+        # --- ARRANGE ---
+        mock_capturer = MagicMock()
+        mock_capturer.isOpened.return_value = True
+        # both the original read AND the post-rewind read fail
+        mock_capturer.read.side_effect = [(False, None), (False, None)]
+        video_capture.return_value = mock_capturer
+
+        provider = FrameProvider("broken.mp4")
+
+        # --- ACT & ASSERT ---
+        self.assertRaises(VideoOpenError, provider.get_frame)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -56,11 +56,26 @@ void test_ignores_message_without_drowsy_status(void) {
     TEST_ASSERT_EQUAL_INT(0, mock_buzzer->start_calls);
 }
 
+// Real bug risk found via coverage review: valid JSON with no "status" key
+// makes jdoc["status"] return nullptr, and strncmp(nullptr, ...) is
+// undefined behavior (likely a crash on real hardware). Decryption always
+// produces a "status" field in normal operation, but malformed/garbage
+// input reaching this point should never crash the board. This test only
+// passes once onMessage() null-checks status before strncmp.
+void test_does_not_crash_on_json_without_status_field(void) {
+    const char* json = "{\"timestamp\":\"t\",\"probability\":0.9}";
+
+    handler->onMessage(json, 1000);
+
+    TEST_ASSERT_EQUAL_INT(0, mock_buzzer->start_calls);
+}
+
 int main(int argc, char** argv) {
     UNITY_BEGIN();
     RUN_TEST(test_buzzer_starts_on_drowsy_message);
     RUN_TEST(test_buzzer_does_not_restart_if_already_active);
     RUN_TEST(test_buzzer_stops_after_timeout_via_update);
     RUN_TEST(test_ignores_message_without_drowsy_status);
+    RUN_TEST(test_does_not_crash_on_json_without_status_field);
     return UNITY_END();
 }
