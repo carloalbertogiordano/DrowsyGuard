@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+import cv2
 
 from src.exceptions.FrameError import FrameError
 from src.image_processor import ImageProcessor
@@ -35,6 +36,27 @@ class TestImageProcessor(unittest.TestCase):
     def test_preprocess_raises_on_none_frame(self):
         proc = ImageProcessor()
         self.assertRaises(FrameError, proc.preprocess, None)
+
+    def test_to_luminate_channels_are_Y_B_R(self):
+        # ARRANGE: pure red pixel image, RGB order (R=255, G=0, B=0)
+        img = np.zeros((4, 4, 3), dtype=np.uint8)
+        img[:, :, 0] = 255
+
+        proc = ImageProcessor()
+
+        # ACT
+        out = proc.to_luminate(img)
+
+        # ASSERT: shape stays 3-channel (not collapsed to a single Y plane)
+        self.assertEqual(out.shape, (4, 4, 3))
+        # channel order must be [Y, B, R] -- B and R are the raw input
+        # channels, unchanged; Y must match OpenCV's own YCrCb conversion
+        # (regression guard: catches accidentally returning Y-only, or
+        # swapping/mislabeling the B/R channels)
+        expected_y = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)[:, :, 0]
+        np.testing.assert_array_equal(out[:, :, 0], expected_y)
+        np.testing.assert_array_equal(out[:, :, 1], img[:, :, 2])
+        np.testing.assert_array_equal(out[:, :, 2], img[:, :, 0])
 
 
 if __name__ == "__main__":

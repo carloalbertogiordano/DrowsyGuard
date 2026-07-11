@@ -22,6 +22,7 @@ class DrowsinessMonitor:
         self.threshold = 0.70
         self.window_size = 5
         self.prob_buffer = deque(maxlen=self.window_size)
+        self.show_debug = True
 
     def run(self):
         while self.is_running:
@@ -32,15 +33,25 @@ class DrowsinessMonitor:
             input_tensor = self.image_processor.preprocess(frame)
             confidence = self.inference_engine.predict(input_tensor)
             self.prob_buffer.append(confidence)
-            avg_confidence = sum(x for x in self.prob_buffer) / len(self.prob_buffer)
+            avg_confidence = sum(self.prob_buffer) / len(self.prob_buffer)
 
             is_drowsy = avg_confidence > self.threshold
+            print(
+                f"[monitor] raw={confidence:.3f} "
+                f"avg={avg_confidence:.3f} "
+                f"threshold={self.threshold} "
+                f"drowsy={is_drowsy}")
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             self.alert_notifier.notify(
-                drowsy_detected=is_drowsy, timestamp=timestamp, confidence=avg_confidence
+                drowsy_detected=is_drowsy, timestamp=timestamp,
+                confidence=avg_confidence
             )
-            self._display_frame(frame, is_drowsy, avg_confidence)
+            # Show webcam if debugging is true
+            if self.show_debug:
+                self._display_frame(frame, is_drowsy, avg_confidence)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    self.stop()
 
     def _display_frame(self, frame, is_drowsy, confidence, fps=0.0):
         cv2.imshow("Drowsiness Monitor", frame)
