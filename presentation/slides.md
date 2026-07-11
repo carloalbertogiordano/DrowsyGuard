@@ -157,13 +157,13 @@ style: |
 # DrowsyGuard
 ## Secure Driver Drowsiness Detection
 
-Embedded Systems & IoT Security, Course Project
+Embedded Systems, Course Project (Prof. Simone Romano, Prof. Giuseppe Scaniello)
 
 <span class="tag">Raspberry Pi (emulated)</span><span class="tag">TinyML / TFLite</span><span class="tag">AES-256-CBC</span><span class="tag">Arduino Uno R4 WiFi</span>
 
 <!--
 Welcome. This is DrowsyGuard, a secure driver drowsiness detection system,
-built for the Embedded Systems and IoT Security course. It's an
+built for the Embedded Systems course. It's an
 architectural clone of the example fire-detector project, adapted to a
 different domain: detecting when a driver is falling asleep at the wheel.
 
@@ -677,7 +677,7 @@ src and the Arduino core stayed mine throughout, by design.
 
 ## Questions?
 
-<p class="small">DrowsyGuard, Embedded Systems &amp; IoT Security</p>
+<p class="small">DrowsyGuard, Embedded Systems</p>
 
 <!--
 That's the full loop: five testable components, a lightweight custom CNN

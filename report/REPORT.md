@@ -1,7 +1,6 @@
 # DrowsyGuard: Secure Driver Drowsiness Detection
 
-**Course:** Embedded Systems & IoT Security
-**Domain:** Driver drowsiness detection, an architectural clone of the example Fire Detector project retargeted to a different problem.
+**Course:** Embedded Systems (Prof. Simone Romano, Prof. Giuseppe Scaniello)
 
 ---
 
