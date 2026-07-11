@@ -356,7 +356,7 @@ stopping. Removing it gave the most balanced result of any run.
 
 ---
 
-# Results, Honest Numbers
+# Results
 
 <div class="cols">
 <div>
