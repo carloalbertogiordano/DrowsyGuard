@@ -105,7 +105,13 @@ def build_generators():
         rotation_range=15,
         width_shift_range=0.1,
         height_shift_range=0.1,
-        zoom_range=0.1,
+        # Wider than the original 0.1: synthesizes bigger apparent
+        # distance/scale swings, targeting the live distance-sensitivity
+        # limitation (see IMPLEMENTATION_PLAN.md 4.3). Zooming "out" on an
+        # already-cropped source photo pads/repeats edge pixels rather than
+        # revealing real background, so this is an approximation of a
+        # genuinely distant photo, not equivalent to one.
+        zoom_range=0.35,
         horizontal_flip=True,
         brightness_range=[0.5, 1.5],
         channel_shift_range=40.0,

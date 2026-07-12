@@ -361,9 +361,9 @@ stopping. Removing it gave the most balanced result of any run.
 <div class="cols">
 <div>
 
-<div class="metric"><span class="n">78.9%</span><span class="l">accuracy</span></div>
-<div class="metric"><span class="n">0.896</span><span class="l">AUC</span></div>
-<div class="metric"><span class="n">0.735 / 0.799</span><span class="l">recall (not-drowsy / drowsy)</span></div>
+<div class="metric"><span class="n">77.2%</span><span class="l">accuracy</span></div>
+<div class="metric"><span class="n">160×160</span><span class="l">final input size</span></div>
+<div class="metric"><span class="n">0.743 / 0.797</span><span class="l">recall (not-drowsy / drowsy)</span></div>
 
 <p class="small">First trustworthy number in the project: a live test led to finding
 data leakage in <b>both</b> merged datasets (86.7% / 99.6% near-duplicate overlap
@@ -389,8 +389,13 @@ original dataset too, out of caution -- 86.7% leakage there as well,
 present since the very first run, never caught. Rebuilt the split from
 scratch clustering near-duplicates together, never splitting one across
 train and validation. 78.9% is what's left once you can't cheat by
-memorizing near-identical frames. Lower, and the first number here I'd
-actually defend.
+memorizing near-identical frames. From there, went after the live
+distance-sensitivity problem directly: raised input resolution to
+160x160, which is nearly free on the parameter budget thanks to global
+average pooling, and widened the zoom augmentation to synthesize bigger
+apparent distance swings. Final number: 77.2%, statistically the same as
+before. Lower than the earlier leaky numbers across the board, and the
+only one here I'd actually defend.
 -->
 
 ---
@@ -504,7 +509,7 @@ confirmation of the alarm state.
 
 ---
 
-# Three Real Bugs, Found on Real Hardware
+# Four Real Bugs, Found on Real Hardware
 
 <div class="box bug"><b>1. Wrong WiFi SSID</b>: diagnosed by adding a temporary
 <code>WiFi.scanNetworks()</code> dump; the board was silent over serial
@@ -520,16 +525,23 @@ closed. Root cause: live inference was feeding plain RGB, while the model
 was trained on the <b>Y/B/R</b> transform, a preprocessing pipeline
 mismatch invisible in unit tests (which never exercise the real camera path).</div>
 
+<div class="box bug"><b>4. LED went dark mid-detection</b>, found last, after
+everything else looked done. MQTT only published on the false→true
+transition; Arduino self-times-out 2s after its last message. Any drowsy
+episode longer than that went dark with Python still internally "active".</div>
+
 <!--
-None of these three bugs showed up in the unit test suite -- and that's
-the point I want to make with this slide. All three only surfaced once
+None of these four bugs showed up in the unit test suite -- and that's
+the point I want to make with this slide. All four only surfaced once
 the system ran end to end on real hardware and real input. A wrong WiFi
 network. A hardware timer silently failing because of C++ static
-initialization order on this specific board. And the most interesting
-one: the live camera pipeline and the training pipeline had quietly
-diverged in what "correct" input looks like, and nothing in the test
-suite could have caught that, because the tests never touch a real
-camera frame. Physical bring-up earned its place in the schedule.
+initialization order on this specific board. The live camera pipeline
+and the training pipeline quietly diverging in what "correct" input
+looks like. And the last one, found after I thought the hardware story
+was finished: a protocol assumption, publish once on state change, that
+quietly broke for any drowsy episode lasting more than two seconds.
+Fixed with a one-second MQTT keep-alive. Physical bring-up earned its
+place in the schedule, repeatedly.
 -->
 
 ---

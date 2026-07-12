@@ -7,7 +7,7 @@ discards / false detections, see project discussion).
 import numpy as np
 import cv2
 
-SQUARE_SIZE = (96, 96)
+SQUARE_SIZE = (160, 160)
 
 
 def to_luminance(image: np.ndarray) -> np.ndarray:

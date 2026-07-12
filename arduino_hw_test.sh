@@ -70,7 +70,7 @@ step1_build() {
         (cd "$ARDUINO_DIR" && pio run -e uno_r4_wifi)
         step2_flash
     else
-        step4_exit
+        step3_mqtt
     fi
 }
 

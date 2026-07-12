@@ -1276,9 +1276,9 @@ li::marker { color: var(--accent2); }
 <h1 id="results">Results</h1>
 <div class="cols">
 <div>
-<div class="metric"><span class="n">78.9%</span><span class="l">accuracy</span></div>
-<div class="metric"><span class="n">0.896</span><span class="l">AUC</span></div>
-<div class="metric"><span class="n">0.735 / 0.799</span><span class="l">recall (not-drowsy / drowsy)</span></div>
+<div class="metric"><span class="n">77.2%</span><span class="l">accuracy</span></div>
+<div class="metric"><span class="n">160×160</span><span class="l">final input size</span></div>
+<div class="metric"><span class="n">0.743 / 0.797</span><span class="l">recall (not-drowsy / drowsy)</span></div>
 <p class="small">First trustworthy number in the project: a live test led to finding
 data leakage in <b>both</b> merged datasets (86.7% / 99.6% near-duplicate overlap
 between train/validation), fixed via near-duplicate clustering. Every earlier,
@@ -2065,7 +2065,7 @@ li::marker { color: var(--accent2); }
 .fix { border-left: 4px solid #2d7d3a; background: #eef7ef; }
 " lang="it-IT" data-marpit-pagination="13" style="--paginate:true;--theme:default;--style:@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&amp;display=swap')
 ;" data-marpit-pagination-total="18" data-size="16:9">
-<h1 id="three-real-bugs-found-on-real-hardware">Three Real Bugs, Found on Real Hardware</h1>
+<h1 id="four-real-bugs-found-on-real-hardware">Four Real Bugs, Found on Real Hardware</h1>
 <div class="box bug"><b>1. Wrong WiFi SSID</b>: diagnosed by adding a temporary
 <code>WiFi.scanNetworks()</code> dump; the board was silent over serial
 before that, no logging existed at all.</div>
@@ -2077,6 +2077,10 @@ board's own clock/peripheral init. Silent failure, no error anywhere.</div>
 closed. Root cause: live inference was feeding plain RGB, while the model
 was trained on the <b>Y/B/R</b> transform, a preprocessing pipeline
 mismatch invisible in unit tests (which never exercise the real camera path).</div>
+<div class="box bug"><b>4. LED went dark mid-detection</b>, found last, after
+everything else looked done. MQTT only published on the false→true
+transition; Arduino self-times-out 2s after its last message. Any drowsy
+episode longer than that went dark with Python still internally "active".</div>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="14" data-paginate="true" data-theme="default" data-style="@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&amp;display=swap');
 
@@ -2933,8 +2937,13 @@ original dataset too, out of caution -- 86.7% leakage there as well,
 present since the very first run, never caught. Rebuilt the split from
 scratch clustering near-duplicates together, never splitting one across
 train and validation. 78.9% is what's left once you can't cheat by
-memorizing near-identical frames. Lower, and the first number here I'd
-actually defend.</p></div><div class="bespoke-marp-note" data-index="8" tabindex="0"><p>Moving to the IoT security half of the course requirements.</p></div><div class="bespoke-marp-note" data-index="9" tabindex="0"><p>Two security pieces here. First: on detection, AlertNotifier doesn't just
+memorizing near-identical frames. From there, went after the live
+distance-sensitivity problem directly: raised input resolution to
+160x160, which is nearly free on the parameter budget thanks to global
+average pooling, and widened the zoom augmentation to synthesize bigger
+apparent distance swings. Final number: 77.2%, statistically the same as
+before. Lower than the earlier leaky numbers across the board, and the
+only one here I'd actually defend.</p></div><div class="bespoke-marp-note" data-index="8" tabindex="0"><p>Moving to the IoT security half of the course requirements.</p></div><div class="bespoke-marp-note" data-index="9" tabindex="0"><p>Two security pieces here. First: on detection, AlertNotifier doesn't just
 flip a GPIO pin, it publishes an encrypted telemetry payload over MQTT --
 AES-256-CBC, verified working across two languages, Python encrypting and
 JavaScript decrypting inside Node-RED, feeding a live dashboard. That's a
@@ -2953,15 +2962,17 @@ the same encrypted MQTT topic, decrypts it on-device with a vendored
 AES implementation, and drives an alarm. The buzzer is real and
 working; alongside it, the board's built-in LED matrix also lights up,
 since the hardware's already there and it gives a second, unmistakable
-confirmation of the alarm state.</p></div><div class="bespoke-marp-note" data-index="12" tabindex="0"><p>None of these three bugs showed up in the unit test suite -- and that's
-the point I want to make with this slide. All three only surfaced once
+confirmation of the alarm state.</p></div><div class="bespoke-marp-note" data-index="12" tabindex="0"><p>None of these four bugs showed up in the unit test suite -- and that's
+the point I want to make with this slide. All four only surfaced once
 the system ran end to end on real hardware and real input. A wrong WiFi
 network. A hardware timer silently failing because of C++ static
-initialization order on this specific board. And the most interesting
-one: the live camera pipeline and the training pipeline had quietly
-diverged in what &quot;correct&quot; input looks like, and nothing in the test
-suite could have caught that, because the tests never touch a real
-camera frame. Physical bring-up earned its place in the schedule.</p></div><div class="bespoke-marp-note" data-index="13" tabindex="0"><p>This is the full loop, verified live: webcam feed in, through the
+initialization order on this specific board. The live camera pipeline
+and the training pipeline quietly diverging in what &quot;correct&quot; input
+looks like. And the last one, found after I thought the hardware story
+was finished: a protocol assumption, publish once on state change, that
+quietly broke for any drowsy episode lasting more than two seconds.
+Fixed with a one-second MQTT keep-alive. Physical bring-up earned its
+place in the schedule, repeatedly.</p></div><div class="bespoke-marp-note" data-index="13" tabindex="0"><p>This is the full loop, verified live: webcam feed in, through the
 smoothing and threshold logic, out as an encrypted MQTT message, received
 and decrypted by the physical Arduino, which lights its LED matrix. It
 works, but I want to be upfront about a real limitation discovered during
