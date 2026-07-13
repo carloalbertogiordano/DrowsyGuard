@@ -21,7 +21,7 @@ class TestAlertNotifier(TestCase):
         mock_instance.connect_async.assert_called_with("127.0.0.1", 1883, keepalive=60)
 
     @patch.object(mqtt, 'Client')
-    def test_publish_via_mqtt_publishes_encrypted_payload_at_right_topic(self, mock_client_class):
+    def test_publish_via_mqtt_uses_correct_topic(self, mock_client_class):
         # --- ARRANGE ---
         mock_instance = MagicMock()
         mock_client_class.return_value = mock_instance
@@ -32,33 +32,66 @@ class TestAlertNotifier(TestCase):
         notifier.publish_via_mqtt(timestamp="2026-07-09 20:12:00", confidence=0.85)
 
         # --- ASSERT ---
-        # correct topic, payload = ANY because it's encrypted (different string each time due to random IV)
+        # payload = ANY because it's encrypted (different string each time due to random IV)
         mock_instance.publish.assert_called_once_with("v1/devices/me/telemetry", ANY)
-        # the published payload must be a string (base64), not the plain dict
-        published_payload = mock_instance.publish.call_args[0][1]
-        self.assertIsInstance(published_payload, str)
 
     @patch.object(mqtt, 'Client')
-    def test_notify_does_not_publish_multiple_times_while_drowsy_persists(self, mock_client_class):
+    def test_publish_via_mqtt_encrypts_the_payload(self, mock_client_class):
         # --- ARRANGE ---
         mock_instance = MagicMock()
         mock_client_class.return_value = mock_instance
         notifier = AlertNotifier()
         notifier._connected = True
 
-        # --- ACT 1: first detection ---
+        # --- ACT ---
+        notifier.publish_via_mqtt(timestamp="2026-07-09 20:12:00", confidence=0.85)
+
+        # --- ASSERT ---
+        # the published payload must be a string (base64), not the plain dict
+        published_payload = mock_instance.publish.call_args[0][1]
+        self.assertIsInstance(published_payload, str)
+
+    @patch.object(mqtt, 'Client')
+    def test_notify_activates_alarm_on_first_drowsy_detection(self, mock_client_class):
+        # --- ARRANGE ---
+        mock_client_class.return_value = MagicMock()
+        notifier = AlertNotifier()
+        notifier._connected = True
+
+        # --- ACT ---
         notifier.notify(drowsy_detected=True, timestamp="10:00:00", confidence=0.90)
 
-        # --- ASSERT 1 ---
+        # --- ASSERT ---
         self.assertTrue(notifier.alarm_state.is_active)
+
+    @patch.object(mqtt, 'Client')
+    def test_notify_publishes_once_on_first_drowsy_detection(self, mock_client_class):
+        # --- ARRANGE ---
+        mock_instance = MagicMock()
+        mock_client_class.return_value = mock_instance
+        notifier = AlertNotifier()
+        notifier._connected = True
+
+        # --- ACT ---
+        notifier.notify(drowsy_detected=True, timestamp="10:00:00", confidence=0.90)
+
+        # --- ASSERT ---
         mock_instance.publish.assert_called_once()
 
+    @patch.object(mqtt, 'Client')
+    def test_notify_does_not_publish_multiple_times_while_drowsy_persists(self, mock_client_class):
+        # --- ARRANGE: first detection already published once ---
+        mock_instance = MagicMock()
+        mock_client_class.return_value = mock_instance
+        notifier = AlertNotifier()
+        notifier._connected = True
+        notifier.notify(drowsy_detected=True, timestamp="10:00:00", confidence=0.90)
         mock_instance.publish.reset_mock()
 
-        # --- ACT 2: consecutive detection (same state) ---
+        # --- ACT: consecutive detection (same state) ---
         notifier.notify(drowsy_detected=True, timestamp="10:00:01", confidence=0.92)
 
-        # --- ASSERT 2: no new publish ---
+        # --- ASSERT: no new publish ---
         mock_instance.publish.assert_not_called()
 
     @patch.object(mqtt, 'Client')
@@ -115,6 +148,24 @@ class TestAlertNotifier(TestCase):
     @patch('src.alert_notifier.mqtt.Client')
     @patch.object(GPIO, "PWM")
     @patch('time.time')
+    def test_alarm_stays_active_before_min_duration_elapses(self, mock_time, mock_pwm_class, mock_mqtt_class):
+        # --- ARRANGE ---
+        mock_pwm_class.return_value = MagicMock()
+        mock_mqtt_class.return_value = MagicMock()
+        notifier = AlertNotifier()
+        notifier.alarm_state.is_active = True
+        notifier.alarm_state.last_trigger_time = 1000.0
+        mock_time.return_value = 1001.0  # 1s later, < min_alarm_duration (2s)
+
+        # --- ACT ---
+        notifier.notify(drowsy_detected=False, timestamp="12:00:00", confidence=0.9)
+
+        # --- ASSERT: still active ---
+        self.assertTrue(notifier.alarm_state.is_active)
+
+    @patch('src.alert_notifier.mqtt.Client')
+    @patch.object(GPIO, "PWM")
+    @patch('time.time')
     def test_buzzer_stays_on_before_min_duration_elapses(self, mock_time, mock_pwm_class, mock_mqtt_class):
         # --- ARRANGE ---
         mock_pwm_instance = MagicMock()
@@ -128,8 +179,7 @@ class TestAlertNotifier(TestCase):
         # --- ACT ---
         notifier.notify(drowsy_detected=False, timestamp="12:00:00", confidence=0.9)
 
-        # --- ASSERT: still active, buzzer must NOT stop yet ---
-        self.assertTrue(notifier.alarm_state.is_active)
+        # --- ASSERT: buzzer must NOT stop yet ---
         mock_pwm_instance.stop.assert_not_called()
 
     @patch.object(mqtt, 'Client')
@@ -169,13 +219,16 @@ class TestAlertNotifier(TestCase):
         self.assertFalse(notifier._connected)
 
     @patch.object(mqtt, 'Client')
-    def test_on_disconnect_after_never_connecting_does_not_raise(self, mock_client_class):
+    def test_on_disconnect_after_never_connecting_leaves_connected_flag_false(self, mock_client_class):
         # --- ARRANGE ---
         mock_client_class.return_value = MagicMock()
         notifier = AlertNotifier()
 
-        # --- ACT / ASSERT: must not raise (only exercises the log path) ---
+        # --- ACT ---
         notifier._on_disconnect(client=None, userdata=None, rc=1)
+
+        # --- ASSERT ---
+        self.assertFalse(notifier._connected)
 
     @patch.object(mqtt, 'Client')
     def test_publish_via_mqtt_does_nothing_when_not_connected(self, mock_client_class):

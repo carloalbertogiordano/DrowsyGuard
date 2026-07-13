@@ -9,7 +9,7 @@ from src.frame_provider import FrameProvider
 
 class TestFrameProvider(unittest.TestCase):
     @patch.object(cv2, 'VideoCapture')
-    def test_get_frame_returns_numpy_array(self, video_capture: MagicMock):
+    def test_get_frame_returns_a_numpy_array(self, video_capture: MagicMock):
         # --- ARRANGE ---
         fake_frame = np.zeros((10, 10, 3), dtype=np.uint8)
         mock_capturer = MagicMock()
@@ -24,6 +24,22 @@ class TestFrameProvider(unittest.TestCase):
 
         # --- ASSERT ---
         self.assertIsInstance(result, np.ndarray)
+
+    @patch.object(cv2, 'VideoCapture')
+    def test_get_frame_returns_the_captured_frame(self, video_capture: MagicMock):
+        # --- ARRANGE ---
+        fake_frame = np.zeros((10, 10, 3), dtype=np.uint8)
+        mock_capturer = MagicMock()
+        mock_capturer.read.return_value = (True, fake_frame)
+        mock_capturer.isOpened.return_value = True
+        video_capture.return_value = mock_capturer
+
+        provider = FrameProvider("dummy.mp4")
+
+        # --- ACT ---
+        result = provider.get_frame()
+
+        # --- ASSERT ---
         self.assertTrue(np.array_equal(result, fake_frame))
 
     @patch.object(cv2, 'VideoCapture')
@@ -37,7 +53,25 @@ class TestFrameProvider(unittest.TestCase):
         self.assertRaises(VideoOpenError, FrameProvider, "bad_path.mp4")
 
     @patch.object(cv2, 'VideoCapture')
-    def test_get_frame_loops_video_when_it_ends(self, video_capture: MagicMock):
+    def test_get_frame_rewinds_video_when_it_ends(self, video_capture: MagicMock):
+        # --- ARRANGE ---
+        fake_frame = np.zeros((10, 10, 3), dtype=np.uint8)
+        mock_capturer = MagicMock()
+        mock_capturer.isOpened.return_value = True
+        # first read fails (video ended), second one restarts from the beginning
+        mock_capturer.read.side_effect = [(False, None), (True, fake_frame)]
+        video_capture.return_value = mock_capturer
+
+        provider = FrameProvider("video.mp4")
+
+        # --- ACT ---
+        provider.get_frame()
+
+        # --- ASSERT ---
+        mock_capturer.set.assert_called_with(cv2.CAP_PROP_POS_FRAMES, 0)
+
+    @patch.object(cv2, 'VideoCapture')
+    def test_get_frame_returns_first_frame_after_rewind(self, video_capture: MagicMock):
         # --- ARRANGE ---
         fake_frame = np.zeros((10, 10, 3), dtype=np.uint8)
         mock_capturer = MagicMock()
@@ -53,7 +87,6 @@ class TestFrameProvider(unittest.TestCase):
 
         # --- ASSERT ---
         self.assertTrue(np.array_equal(result, fake_frame))
-        mock_capturer.set.assert_called_with(cv2.CAP_PROP_POS_FRAMES, 0)
 
     @patch.object(cv2, 'VideoCapture')
     def test_get_frame_raises_when_rewind_also_fails(self, video_capture: MagicMock):

@@ -11,7 +11,7 @@ class TestSecurityManager(TestCase):
         self.key = "0123456789abcdef"
         self.manager = SecurityManager(self.key)
 
-    def test_encrypt_data_returns_base64_string(self):
+    def test_encrypt_data_returns_a_string(self):
         # --- ARRANGE ---
         data = {"status": "DROWSY_DETECTED", "probability": 0.91}
 
@@ -20,8 +20,17 @@ class TestSecurityManager(TestCase):
 
         # --- ASSERT ---
         self.assertIsInstance(result, str)
+
+    def test_encrypt_data_output_has_iv_plus_block_length(self):
+        # --- ARRANGE ---
+        data = {"status": "DROWSY_DETECTED", "probability": 0.91}
+
+        # --- ACT ---
+        result = self.manager.encrypt_data(data)
         # must be decodable as base64 without errors
         decoded = base64.b64decode(result)
+
+        # --- ASSERT ---
         # must contain at least IV (16 bytes) + one encrypted block (16 bytes)
         self.assertGreaterEqual(len(decoded), 32)
 
